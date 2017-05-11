@@ -108,10 +108,10 @@ public class ThumbNailMaker {
         return "*.{" + String.join(",", SOURCE_IMAGE_FORMATS) + "}";
     }
 
-    private void parallelExecution(final List<List<File>> partitions, final String outputDir) {
+    private void parallelExecution(final List<List<File>> partitions, final String outputDir, final Integer threadCount) {
         final Collection<Callable<Void>> tasks = new ArrayList<>();
         partitions.forEach(list -> tasks.add(new Task(list, outputDir)));
-        final ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT_DEFAULT);
+        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         try {
             final List<Future<Void>> results = executor.invokeAll(tasks);
             results.forEach(result -> System.out.println(result.isDone()));
@@ -216,7 +216,7 @@ public class ThumbNailMaker {
         System.out.println(String.format("Started to generate thumbnail for %d images", sourceImages.size()));
         final int partitionSize = IntMath.divide(sourceImages.size(), command.threadCount, RoundingMode.UP);
         final List<List<File>> partitions = Lists.partition(sourceImages, partitionSize);
-        thumbNailMaker.parallelExecution(partitions, command.outputDirectory);
+        thumbNailMaker.parallelExecution(partitions, command.outputDirectory, command.threadCount);
         final Instant ends = Instant.now();
 
         System.out.println(String.format("Total time taken to generate thumbnails of %d images is %s seconds", sourceImages.size(),
